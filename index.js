@@ -13,52 +13,54 @@ var pads={
   pads:[] ,
   search: function(query, callback){
     logger.debug("Admin/Pad | Query is",query);
-    var pads=padManager.listAllPads().padIDs
-      , data={
-        progress : 1
-        , message: "Search done."
-        , query: query
-        , total: pads.length
-      }
-      , maxResult=0
-      , result=[]
-    ;
-    
-    if(query["pattern"] != null && query["pattern"] != ''){
-      var pattern=query.pattern+"*";
-      pattern=RegExp.quote(pattern);
-      pattern=pattern.replace(/(\\\*)+/g,'.*');
-      pattern="^"+pattern+"$";
-      var regex=new RegExp(pattern,"i");
-      pads.forEach(function(padID){
-        if(regex.test(padID)){
-          result.push(padID);
+    padManager.listAllPads(function (err, padList) {
+      var pads=padList.padIDs
+        , data={
+          progress : 1
+          , message: "Search done."
+          , query: query
+          , total: pads.length
         }
-      });
-    }else{
-      result=pads;
-    }
-    
-    data.total=result.length;
-    
-    maxResult=result.length-1;
-    if(maxResult<0)maxResult=0;
-    
-    if(!isNumeric(query.offset) || query.offset<0) query.offset=0;
-    else if(query.offset>maxResult) query.offset=maxResult;
-    
-    if(!isNumeric(query.limit) || query.limit<0) query.limit=queryLimit;
-    
-    data.results=result.slice(query.offset, query.offset + query.limit);
-    pads.pads=data.results;
-    
-    callback(data);
+        , maxResult=0
+        , result=[]
+        ;
+
+      if(query["pattern"] != null && query["pattern"] != ''){
+        var pattern=query.pattern+"*";
+        pattern=RegExp.quote(pattern);
+        pattern=pattern.replace(/(\\\*)+/g,'.*');
+        pattern="^"+pattern+"$";
+        var regex=new RegExp(pattern,"i");
+        pads.forEach(function(padID){
+          if(regex.test(padID)){
+            result.push(padID);
+          }
+        });
+      }else{
+        result=pads;
+      }
+
+      data.total=result.length;
+
+      maxResult=result.length-1;
+      if(maxResult<0)maxResult=0;
+
+      if(!isNumeric(query.offset) || query.offset<0) query.offset=0;
+      else if(query.offset>maxResult) query.offset=maxResult;
+
+      if(!isNumeric(query.limit) || query.limit<0) query.limit=queryLimit;
+
+      data.results=result.slice(query.offset, query.offset + query.limit);
+      pads.pads=data.results;
+
+      callback(data);
+    });
   }
 };
 
 exports.registerRoute = function (hook_name, args, cb) {
   args.app.get('/admin/pads', function(req, res) {
-    
+
     var render_args = {
       errors: []
     };
@@ -114,7 +116,7 @@ exports.eejsBlock_adminMenu = function (hook_name, args, cb) {
     , hasTwoDirDown = (args.content.indexOf('<a href="../../') != -1)
     , urlPrefix = hasAdminUrlPrefix ? "admin/" : hasTwoDirDown ? "../../" : hasOneDirDown ? "../" : ""
   ;
-  
+
   args.content = args.content + '<li><a href="'+ urlPrefix +'pads">Manage pads</a> </li>';
   return cb();
 };
